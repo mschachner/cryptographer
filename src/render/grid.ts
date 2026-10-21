@@ -15,13 +15,13 @@ export interface GridRenderOptions {
   slot?: Set<string>; // keys of cells in the current slot
   wrong?: Set<string>; // solver check marks
   isolated?: Set<string>; // cells in no slot (dashed outline)
-  /** The colour the grid is drawn on; void squares inside the grid are painted when `block` differs from it. */
+  /** The color the grid is drawn on; void squares inside the grid are painted when `block` differs from it. */
   background?: string;
 }
 
 /** Letter/number placement constants shared by every renderer. */
 export const LETTER_SIZE = 0.6; // of cell size
-export const LETTER_BASELINE = 0.5 + 0.6 * 0.36; // centre + cap-height/2
+export const LETTER_BASELINE = 0.5 + 0.6 * 0.36; // center + cap-height/2
 export const NUMBER_SIZE = 0.26;
 export const NUMBER_X = 0.09;
 export const NUMBER_BASELINE = 0.09 + 0.26 * 0.74;

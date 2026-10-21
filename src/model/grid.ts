@@ -124,7 +124,7 @@ export function isolatedCells(cells: Cells, slots: Slot[]): Set<string> {
   return out;
 }
 
-/** Image of (r,c) under 180° rotation about the centre of the bounding box. */
+/** Image of (r,c) under 180° rotation about the center of the bounding box. */
 export function rotate180(cells: Cells, r: number, c: number): [number, number] {
   const b = bounds(cells);
   if (!b) return [r, c];

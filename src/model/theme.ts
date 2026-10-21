@@ -18,7 +18,7 @@ export const TEXTURES: TextureDef[] = [
   { id: 'textured-paper', label: 'Textured paper' },
   { id: 'handmade-paper', label: 'Handmade paper' },
   { id: 'rice-paper', label: 'Rice paper' },
-  { id: 'light-paper-fibers', label: 'Paper fibres' },
+  { id: 'light-paper-fibers', label: 'Paper fibers' },
   { id: 'exclusive-paper', label: 'Laid paper' },
   { id: 'groovepaper', label: 'Groove paper' },
   { id: 'cardboard-flat', label: 'Cardboard' },
@@ -261,7 +261,7 @@ export function resolveFonts(f: string | FontSet, custom: FontSet[]): FontSet {
   return f === 'default' ? DEFAULT_FONTS : custom.find((x) => x.id === f) ?? DEFAULT_FONTS;
 }
 
-/** Relative luminance of a hex colour, from 0 to 1. */
+/** Relative luminance of a hex color, from 0 to 1. */
 export function luminance(hex: string): number {
   const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(hex);
   if (!m) return 0;
@@ -273,8 +273,8 @@ export function luminance(hex: string): number {
 }
 
 /**
- * Text colour for buttons and tiles filled with the accent. With `lightOnDark` on, a dark
- * enough accent gets the lighter of the theme's page and ink colours; otherwise ink.
+ * Text color for buttons and tiles filled with the accent. With `lightOnDark` on, a dark
+ * enough accent gets the lighter of the theme's page and ink colors; otherwise ink.
  */
 export function onAccent(t: Theme): string {
   if (t.lightOnDark === false) return t.colors.ink;

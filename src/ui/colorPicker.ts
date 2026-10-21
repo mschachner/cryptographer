@@ -26,7 +26,7 @@ export function hslToHex(hue: number, sat: number, light: number): string {
 }
 
 /**
- * Inline colour picker: hue, saturation and lightness sliders with gradient tracks,
+ * Inline color picker: hue, saturation and lightness sliders with gradient tracks,
  * a hex field, and optional swatches to pick from.
  */
 export function colorPicker(initial: string, onChange: (hex: string) => void, swatches: string[] = []): { el: HTMLElement; set(hex: string): void } {

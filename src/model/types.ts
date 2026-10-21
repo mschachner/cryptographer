@@ -52,9 +52,9 @@ export interface Theme {
   name: string;
   colors: ThemeColors;
   cornerRadius: number; // fraction of cell size
-  /** Id of a background texture tile laid over the page colour; empty or absent for none. */
+  /** Id of a background texture tile laid over the page color; empty or absent for none. */
   texture?: string;
-  /** Use light text and icons on buttons whose colour is dark enough. Absent means on. */
+  /** Use light text and icons on buttons whose color is dark enough. Absent means on. */
   lightOnDark?: boolean;
   builtin?: boolean;
 }

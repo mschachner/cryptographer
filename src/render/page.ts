@@ -18,7 +18,7 @@ export interface PageOptions {
   showLetters: boolean;
   measurer: Measurer;
   dateLine?: string;
-  /** Page colour; exports use white paper. */
+  /** Page color; exports use white paper. */
   background?: string;
 }
 

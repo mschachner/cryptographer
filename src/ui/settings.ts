@@ -54,7 +54,7 @@ export function settingsScreen(root: HTMLElement) {
     refreshTheme();
   };
 
-  // ---------- colour chips and picker ----------
+  // ---------- color chips and picker ----------
   let selectedRole: keyof ThemeColors = 'accent';
   const chips = h('div.chips');
   const picker = colorPicker(theme.colors[selectedRole], (hex) => setColor(selectedRole, hex));
@@ -110,7 +110,7 @@ export function settingsScreen(root: HTMLElement) {
     saveThemeBtn.disabled = !nameIn.value.trim();
   };
 
-  // ---------- light text on dark colours ----------
+  // ---------- light text on dark colors ----------
   const lightChk = h('input', { type: 'checkbox' }) as HTMLInputElement;
   lightChk.onchange = () => {
     if (!themeDirty) fork();

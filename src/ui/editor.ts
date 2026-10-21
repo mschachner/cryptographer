@@ -36,7 +36,7 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
   const tray = h('div.tray');
   const titleInput = h('input.title', { value: p.title, placeholder: 'Title', oninput: () => { p.title = titleInput.value; save(); } }) as HTMLInputElement;
   const dirBtn = h('button.ghost', { onclick: () => setDir(dir === 'A' ? 'D' : 'A'), title: 'Toggle direction (Enter)' }, 'Across');
-  const symBtn = iconButton('symmetry', 'Symmetry', () => { symmetry = !symmetry; symBtn.classList.toggle('on', symmetry); view.el.focus(); }, { text: true, title: 'Mirror changes through the centre' });
+  const symBtn = iconButton('symmetry', 'Symmetry', () => { symmetry = !symmetry; symBtn.classList.toggle('on', symmetry); view.el.focus(); }, { text: true, title: 'Mirror changes through the center' });
 
   const toolbar = h(
     'div.toolbar',
