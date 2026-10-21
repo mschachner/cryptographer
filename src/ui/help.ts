@@ -67,9 +67,9 @@ export function helpContent(theme: Theme, fonts: FontSet): HTMLElement {
       [h('span', kbd('Enter'), ' ', kbd('Tab'), ' or click the cursor square'), 'Switch between across and down'],
       [kbd('Arrows'), 'Move; at right angles to the current direction, switch direction instead'],
       [kbd('Space'), 'Turn a square into a cell, or back into empty space'],
-      [kbd('Backspace'), 'Clear the letter; on an empty cell, remove it and step back'],
-      [kbd('Delete'), 'Remove the cell'],
-      [h('span', kbd('Shift'), ' + arrows or drag'), 'Select a rectangle; Space and Delete then apply to all of it'],
+      [kbd('Backspace'), 'Remove the cell and step back; with a selection, remove every cell in it'],
+      [kbd('Delete'), 'Clear the letter but keep the cell; with a selection, clear all of them'],
+      [h('span', kbd('Shift'), ' + arrows or drag'), 'Select a rectangle; Space, Backspace and Delete then apply to all of it'],
       [kbd('Esc'), 'Clear the selection'],
       [h('span', kbd('⌘Z'), ' ', kbd('⇧⌘Z')), 'Undo, redo'],
       ['Symmetry', 'Mirror every cell you add or remove through the center of the puzzle'],
@@ -86,7 +86,7 @@ export function helpContent(theme: Theme, fonts: FontSet): HTMLElement {
     legend([
       ['Entry number', 'Click to move the cursor to that entry'],
       ['Clue field', 'The clue text'],
-      ['Bracketed field', 'The enumeration: word lengths such as 5,4 or 3-6. Defaults to the entry length'],
+      ['Bracketed field', 'The enumeration: word lengths such as 5,4 or 3-6. Shows the entry length until you change it'],
       ['Bookmark button', 'Send the answer and clue to the bank'],
       ['Orphaned clues', 'Clues whose entry was removed. Delete them or send them to the bank'],
       ['Dashed cell', 'A cell that belongs to no entry'],
@@ -98,6 +98,7 @@ export function helpContent(theme: Theme, fonts: FontSet): HTMLElement {
     legend([
       ['Auto-save', 'Every puzzle is saved in this browser as you work'],
       ['Card menu', 'Share, export, duplicate or delete a puzzle'],
+      ['Show answers', 'Fill the letters into the previews'],
       ['Back up everything', 'A file with all puzzles, the clue bank and themes'],
       ['Restore from backup', 'Load that file, for example on another computer'],
       ['Paste a share link', 'Add a single puzzle'],
@@ -108,10 +109,11 @@ export function helpContent(theme: Theme, fonts: FontSet): HTMLElement {
     'Clue bank',
     p("The bank stores all the clues you've written, independently of any puzzle."),
     legend([
-      ['Add (Bank page)', 'A new entry. Spaces or hyphens in the answer fill in the enumeration'],
+      ['Add (Bank page)', 'A new entry with answer, clue, lengths and tags. Lengths fill in from the answer as you type'],
       ['Bookmark button (editor)', "Send an entry's answer and clue to the bank"],
       ['Bank matches (editor panel)', 'Bank entries that fit the current entry. Click one to place the answer and its clue'],
-      ['New puzzle from selection', 'Start a puzzle with the selected answers in a tray; click an answer to place it at the cursor'],
+      ['New puzzle from selection', 'Start a puzzle with the selected answers in a tray; click an answer to place it at the cursor. Undo takes a placement back and the answer can be placed again'],
+      ['Column headings', 'Click to sort; click again to reverse'],
       ['Search', 'Text, or a pattern: S?A?? matches five-letter answers with S first and A third'],
     ]),
   );

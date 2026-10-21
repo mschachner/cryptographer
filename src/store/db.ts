@@ -35,6 +35,8 @@ export interface Settings {
   theme: string;
   fonts: string;
   author: string;
+  /** Show answers in library and home thumbnails. */
+  showAnswers?: boolean;
 }
 
 export const puzzleStore = {

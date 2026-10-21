@@ -17,6 +17,8 @@ export interface GridRenderOptions {
   isolated?: Set<string>; // cells in no slot (dashed outline)
   /** The color the grid is drawn on; void squares inside the grid are painted when `block` differs from it. */
   background?: string;
+  /** Lower bound on the outline width, in grid units (the editor passes 1.5 screen pixels). */
+  minStroke?: number;
 }
 
 /** Letter/number placement constants shared by every renderer. */
@@ -38,7 +40,7 @@ export function renderGrid(cells: Cells, o: GridRenderOptions): Op[] {
   const nums = numberMap(slots);
   const showNumbers = o.showNumbers ?? true;
   const showLetters = o.showLetters ?? true;
-  const stroke = Math.max(1, S * 0.035);
+  const stroke = Math.max(o.minStroke ?? 1, S * 0.035);
 
   const bgColor = (o.background ?? th.page).toLowerCase();
   if ((th.block ?? th.page).toLowerCase() !== bgColor) {

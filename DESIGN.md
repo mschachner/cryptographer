@@ -121,8 +121,8 @@ The editor has one **cursor** (the selected square) and one **direction** (acros
 | Type a letter | Put the letter in the cursor square — creating the cell if the square was void — then advance one square in the current direction. |
 | Arrow keys | Move the cursor one square. Moving along the current direction keeps it; moving perpendicular to it switches direction. |
 | Enter or Tab | Toggle direction. |
-| Backspace | Clear the cursor square's letter if it has one; otherwise move back one square and clear it. Does not remove the cell. |
-| Delete or ⌫ on an empty cell | Remove the cell (make it void). |
+| Backspace | Remove the cell under the cursor, letter and all, and move back one square. On a selection, remove every cell in it. |
+| Delete | Clear the letter but keep the cell. On a selection, clear every letter in it. |
 | Space | Toggle the cursor square between cell and void. |
 | Shift+arrow / drag | Select a rectangle. Space on a selection creates or voids every square in it; Delete voids it; typing is ignored. |
 | ⌘Z / ⇧⌘Z | Undo / redo. Every grid or clue change is one undo step. |
@@ -180,7 +180,7 @@ This is the standard convention and matches what solvers expect of a printed cry
 
 ### 5.2 Clue panel
 
-The clue panel sits beside the grid and lists the Across and Down entries. For each entry it shows: number, the answer as currently typed in the grid, a clue text field, and an enumeration field. Clicking an entry moves the cursor to its first cell and sets the direction; moving the cursor in the grid scrolls the panel to the matching entry. The clue text field accepts plain text; the enumeration field accepts digits, commas, hyphens and apostrophes (`5,4`, `3-6`, `5'1`).
+The clue panel sits beside the grid and lists the Across and Down entries. For each entry it shows: number, the answer as currently typed in the grid, a clue text field, and an enumeration field. Clicking an entry moves the cursor to its first cell and sets the direction; moving the cursor in the grid scrolls the panel to the matching entry. The clue field is a text area that grows with its contents. The enumeration field accepts digits, commas, hyphens and apostrophes (`5,4`, `3-6`, `5'1`); it shows the entry length, in a muted color, until the constructor types something else, and reverts to the length when cleared.
 
 The printed form of a clue is `<number>. <clue text> (<enum>)`. Enumeration is appended automatically; the constructor never types the parentheses.
 
@@ -200,7 +200,7 @@ The persisted form (§3.2) is keyed by number because that is what a share link 
 
 The library is the app's home screen. It lists every puzzle in local storage as a card: a small rendering of the grid (letters hidden), title, dimensions of the bounding box, entry count, completion state (how many entries have clues), and last-modified date. Cards sort by last modified; a search field filters by title and by any answer in the grid.
 
-Actions per puzzle: open, duplicate, rename, export (same dialog as §8), share (§9), delete (with undo for a few seconds rather than a confirmation dialog).
+Actions per puzzle: open, duplicate, rename, export (same dialog as §8), share (§9), delete (with undo for a few seconds rather than a confirmation dialog). A "Show answers" toggle fills the letters into the thumbnails (it also applies to the home screen's recent puzzles).
 
 Library-wide actions: new puzzle, import a puzzle JSON or share link, export the whole library as one JSON file, import such a file (merging by puzzle id).
 
@@ -212,7 +212,7 @@ The editor **autosaves** on every change, debounced; there is no Save button. Th
 
 ### 7.1 Bank screen
 
-A table of bank entries: answer, enumeration, clue, tags, and the puzzles it has been used in. Sortable and searchable (by any substring of answer or clue, and by a pattern such as `S?A??` for an answer shape). Entries can be added by hand, edited in place, tagged, and deleted. The bank exports and imports as JSON like the library.
+A table of bank entries: answer, clue, enumeration, tags, date added, and the number of puzzles it has been used in. Any column sorts on click; searchable (by any substring of answer or clue, and by a pattern such as `S?A??` for an answer shape). Entries are added from a form with answer, clue, enumeration and tags (the enumeration fills in from the answer as it is typed, so "ice cream van" gives 3,5,3), edited in place, and deleted. The bank exports and imports as JSON like the library.
 
 ### 7.2 From puzzle to bank
 
@@ -223,7 +223,7 @@ In the clue panel each entry has a **Bank this** action that copies its answer, 
 This is the "assemble a puzzle from the bank" wish, and it has two halves.
 
 1. **Suggestions while constructing.** When the cursor is in a slot, the clue panel shows bank entries whose answer fits the slot: same length, and agreeing with every letter already in the slot. Choosing one writes the answer into the grid and attaches the clue and enumeration to the entry. Entries already used in another puzzle are shown but marked, so repeats are a choice rather than an accident.
-2. **Seeding a new puzzle.** From the bank, select some entries and choose **New puzzle from selection**. The app opens a new puzzle with those answers listed in a side tray; dragging an answer onto the canvas places it across or down (toggle with the usual key) starting at the drop square, and the clue comes with it. The constructor then connects the placed answers by typing further entries as usual. The app does not attempt to lay the answers out automatically; §1 lists auto-fill as a non-goal.
+2. **Seeding a new puzzle.** From the bank, select some entries and choose **New puzzle from selection**. The app opens a new puzzle with those answers listed in a side tray; clicking an answer places it at the cursor in the current direction, and the clue comes with it. Placed answers stay in the tray, marked, and can be placed again; the tray is part of the undo history, so undoing a placement also un-marks it. The constructor then connects the placed answers by typing further entries as usual. The app does not attempt to lay the answers out automatically; §1 lists auto-fill as a non-goal.
 
 Suggestions require a bank of some size to be useful; until then the slot suggestion list is simply empty.
 
@@ -415,7 +415,6 @@ The questions below were open in the first draft; the prototype goes with the re
 ### Prototype simplifications
 
 - Persistence is localStorage, behind the `store/db.ts` interface described in §12.
-- "New puzzle from selection" places a bank answer at the cursor with a click rather than by dragging onto the canvas (§7.3).
 - The font picker offers the bundled families and a free-text system font; a list of fetchable (non-bundled) web fonts is not built.
 - A Help dialog, reachable from every screen, explains the editor, clues, corner rule, library, bank, sharing, export and themes, with illustrations rendered by the same grid renderer in the current theme. Its copy is the one place the app carries explanatory prose; everything else is labels.
 - Labels avoid file-format and implementation terms: "Back up everything" / "Restore from backup" rather than JSON import/export, "Lengths" for the enumeration field in the bank, color roles shown as "Cursor", "Current entry", "Blocks" and so on.

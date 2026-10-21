@@ -58,7 +58,13 @@ export class GridView {
 
   applyView() {
     const { x, y, k } = this.view;
-    this.world.setAttribute('transform', `translate(${x},${y}) scale(${k})`);
+    // whole-pixel translation keeps cell borders from landing between pixels
+    this.world.setAttribute('transform', `translate(${Math.round(x)},${Math.round(y)}) scale(${k})`);
+  }
+
+  /** Snap a zoom factor so that a cell is a whole number of pixels wide. */
+  private snap(k: number): number {
+    return Math.max(8, Math.round(this.S * k)) / this.S;
   }
 
   /** Screen → world. */
@@ -80,7 +86,7 @@ export class GridView {
       this.view = { x: W / 2 - 3 * this.S, y: H / 2 - 3 * this.S, k: 1 };
     } else {
       const gw = (b.c1 - b.c0 + 1) * this.S, gh = (b.r1 - b.r0 + 1) * this.S;
-      const k = Math.min(1.6, Math.max(0.2, Math.min((W - 80) / gw, (H - 80) / gh)));
+      const k = this.snap(Math.min(1.6, Math.max(0.2, Math.min((W - 80) / gw, (H - 80) / gh))));
       this.view = { x: (W - gw * k) / 2 - b.c0 * this.S * k, y: (H - gh * k) / 2 - b.r0 * this.S * k, k };
     }
     this.applyView();
@@ -103,7 +109,7 @@ export class GridView {
   zoomBy(f: number, cx?: number, cy?: number) {
     const W = this.el.clientWidth, H = this.el.clientHeight;
     const px = cx ?? W / 2, py = cy ?? H / 2;
-    const k2 = Math.min(4, Math.max(0.15, this.view.k * f));
+    const k2 = this.snap(Math.min(4, Math.max(0.15, this.view.k * f)));
     const r = k2 / this.view.k;
     this.view = { x: px - (px - this.view.x) * r, y: py - (py - this.view.y) * r, k: k2 };
     this.applyView();
@@ -111,6 +117,11 @@ export class GridView {
 
   private bindPointer() {
     let panning: { sx: number; sy: number; vx: number; vy: number; moved: boolean; start: PointerEvent } | null = null;
+    // keep keyboard focus on the canvas: the default mousedown focus handling can drop it to <body>
+    this.svg.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      this.el.focus();
+    });
     this.svg.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       this.el.focus();

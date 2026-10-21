@@ -16,6 +16,9 @@ export function libraryScreen(root: HTMLElement) {
   const fonts = currentFonts();
   applyChrome(theme, fonts);
   const search = h('input.search', { placeholder: 'Search', oninput: () => drawCards() }) as HTMLInputElement;
+  let showAnswers = !!settingsStore.get().showAnswers;
+  const answersBtn = iconButton('eye', 'Show answers', () => { showAnswers = !showAnswers; settingsStore.put({ ...settingsStore.get(), showAnswers }); answersBtn.classList.toggle('on', showAnswers); drawCards(); }, { text: true, title: 'Show answers in the previews' });
+  answersBtn.classList.toggle('on', showAnswers);
   const cards = h('div.cards');
   const fileIn = h('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async () => { const f = fileIn.files?.[0]; if (!f) return; try { const n = importAll(await f.text()); toast(`Restored ${n.puzzles} puzzles and ${n.bank} bank entries`); drawCards(); } catch (e) { toast('That file could not be read'); } fileIn.value = ''; } }) as HTMLInputElement;
   const linkIn = h('input', { placeholder: 'Paste a share link', onkeydown: (e: KeyboardEvent) => { if (e.key === 'Enter') importLink(); } }) as HTMLInputElement;
@@ -35,7 +38,7 @@ export function libraryScreen(root: HTMLElement) {
 
   const toolbar = h(
     'div.toolbar',
-    h('div.group', iconButton('plus', 'New puzzle', () => { const p = newPuzzle(); const s = settingsStore.get(); p.theme = s.theme; p.fonts = s.fonts; p.author = s.author; puzzleStore.put(p); go(`#/edit/${p.id}`); }, { text: true, cls: 'primary' }), search),
+    h('div.group', iconButton('plus', 'New puzzle', () => { const p = newPuzzle(); const s = settingsStore.get(); p.theme = s.theme; p.fonts = s.fonts; p.author = s.author; puzzleStore.put(p); go(`#/edit/${p.id}`); }, { text: true, cls: 'primary' }), search, answersBtn),
     h('div.group', linkIn, iconButton('link', 'Add from link', importLink, { text: true }), iconButton('download', 'Back up everything', () => download(new Blob([exportAll()], { type: 'application/json' }), 'cryptographer-backup.json'), { text: true }), iconButton('upload', 'Restore from backup', () => fileIn.click(), { text: true }), fileIn),
   );
   mount(root, nav('library'), toolbar, h('main.library', cards));
@@ -54,10 +57,10 @@ export function libraryScreen(root: HTMLElement) {
 
   function card(j: PuzzleJSON, th: Theme): HTMLElement {
     const p = fromJSON(j);
-    const page = layoutGridOnly(p, th, false, 20, th.colors.page);
+    const page = layoutGridOnly(p, th, showAnswers, 20, th.colors.page);
     const thumb = h('div.thumb');
     if (p.cells.size) {
-      const svg = svgEl(svgDocument(page.ops.filter((o) => o.kind !== 'text'), page.w, page.h, fonts));
+      const svg = svgEl(svgDocument(page.ops.filter((o) => o.kind !== 'text' || (showAnswers && o.role === 'answers')), page.w, page.h, fonts));
       svg.removeAttribute('width');
       svg.removeAttribute('height');
       thumb.append(svg);

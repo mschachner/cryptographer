@@ -43,10 +43,11 @@ export function homeScreen(root: HTMLElement) {
   const recent = h('div.recent');
   for (const j of puzzles.slice(0, 4)) {
     const p = fromJSON(j);
-    const page = layoutGridOnly(p, theme, false, 16, theme.colors.page);
+    const showAnswers = !!settingsStore.get().showAnswers;
+    const page = layoutGridOnly(p, theme, showAnswers, 16, theme.colors.page);
     const thumb = h('div.recent-thumb');
     if (p.cells.size) {
-      const svg = svgEl(svgDocument(page.ops.filter((o) => o.kind !== 'text'), page.w, page.h, fonts));
+      const svg = svgEl(svgDocument(page.ops.filter((o) => o.kind !== 'text' || (showAnswers && o.role === 'answers')), page.w, page.h, fonts));
       svg.removeAttribute('width');
       svg.removeAttribute('height');
       thumb.append(svg);

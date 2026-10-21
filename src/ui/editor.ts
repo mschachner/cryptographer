@@ -18,6 +18,16 @@ interface Sel {
   c1: number;
 }
 
+interface TrayItem {
+  id: string;
+  placed: boolean;
+}
+
+interface Snapshot {
+  puzzle: Puzzle;
+  tray: TrayItem[];
+}
+
 export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string[] = []) {
   const p = puzzle;
   let cursor = { r: 0, c: 0 };
@@ -25,15 +35,16 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
   let symmetry = false;
   let sel: Sel | null = null;
   let selAnchor: { r: number; c: number } | null = null;
-  const undo: Puzzle[] = [];
-  const redo: Puzzle[] = [];
+  let tray: TrayItem[] = bankTray.map((id) => ({ id, placed: false }));
+  const undo: Snapshot[] = [];
+  const redo: Snapshot[] = [];
   let theme = currentTheme();
   let fonts = currentFonts();
   applyChrome(theme, fonts);
 
   const view = new GridView(fonts);
   const panel = h('aside.clue-panel');
-  const tray = h('div.tray');
+  const trayEl = h('div.tray');
   const titleInput = h('input.title', { value: p.title, placeholder: 'Title', oninput: () => { p.title = titleInput.value; save(); } }) as HTMLInputElement;
   const dirBtn = h('button.ghost', { onclick: () => setDir(dir === 'A' ? 'D' : 'A'), title: 'Toggle direction (Enter)' }, 'Across');
   const symBtn = iconButton('symmetry', 'Symmetry', () => { symmetry = !symmetry; symBtn.classList.toggle('on', symmetry); view.el.focus(); }, { text: true, title: 'Mirror changes through the center' });
@@ -62,12 +73,15 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
   const redoBtn = toolbar.querySelector('#redo') as HTMLButtonElement;
 
   const status = h('div.status');
-  const main = h('div.editor', h('div.stage', view.el, status, tray), panel);
+  const main = h('div.editor', h('div.stage', view.el, status, trayEl), panel);
   mount(root, nav('edit'), toolbar, main);
   requestAnimationFrame(() => {
     view.fit(p.cells);
     view.el.focus();
+    draw();
   });
+  // letters are laid out with fallback metrics until the web fonts arrive
+  document.fonts.ready.then(() => draw());
 
   // ---- persistence & history ----
   let saveTimer: number | undefined;
@@ -78,24 +92,26 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
     const crumb = root.querySelector('.crumb');
     if (crumb) crumb.textContent = p.title || 'Untitled';
   }
+  const takeSnapshot = (): Snapshot => ({ puzzle: clonePuzzle(p), tray: tray.map((t) => ({ ...t })) });
   function snapshot() {
-    undo.push(clonePuzzle(p));
+    undo.push(takeSnapshot());
     if (undo.length > 200) undo.shift();
     redo.length = 0;
     undoBtn.disabled = false;
     redoBtn.disabled = true;
   }
-  function restore(from: Puzzle) {
-    p.cells = from.cells;
-    p.clues = from.clues;
-    p.orphans = from.orphans;
-    p.title = from.title;
+  function restore(from: Snapshot) {
+    p.cells = from.puzzle.cells;
+    p.clues = from.puzzle.clues;
+    p.orphans = from.puzzle.orphans;
+    p.title = from.puzzle.title;
     titleInput.value = p.title;
+    tray = from.tray.map((t) => ({ ...t }));
   }
   function doUndo() {
     const s = undo.pop();
     if (!s) return;
-    redo.push(clonePuzzle(p));
+    redo.push(takeSnapshot());
     restore(s);
     undoBtn.disabled = undo.length === 0;
     redoBtn.disabled = false;
@@ -105,7 +121,7 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
   function doRedo() {
     const s = redo.pop();
     if (!s) return;
-    undo.push(clonePuzzle(p));
+    undo.push(takeSnapshot());
     restore(s);
     redoBtn.disabled = redo.length === 0;
     undoBtn.disabled = false;
@@ -148,15 +164,14 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
     });
     move(dir === 'A' ? 0 : 1, dir === 'A' ? 1 : 0, false);
   }
+  /** Backspace removes the cell under the cursor (letter and all) and steps back. */
   function backspace() {
-    const k = cellKey(cursor.r, cursor.c);
-    const cell = p.cells.get(k);
-    if (cell?.l) {
-      commit(() => (cell.l = ''));
-      return;
-    }
-    if (cell) commit(() => setCell(cursor.r, cursor.c, false));
+    if (p.cells.has(cellKey(cursor.r, cursor.c))) commit(() => setCell(cursor.r, cursor.c, false));
     move(dir === 'A' ? 0 : -1, dir === 'A' ? -1 : 0, false);
+  }
+  /** Delete clears letters but keeps the cells. */
+  function clearLetters() {
+    commit(() => forSelection((r, c) => { const cell = p.cells.get(cellKey(r, c)); if (cell) cell.l = ''; }));
   }
   function move(dr: number, dc: number, switchDir = true) {
     if (switchDir) {
@@ -230,7 +245,7 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
         break;
       case 'Delete':
         e.preventDefault();
-        commit(() => forSelection((r, c) => setCell(r, c, false)));
+        clearLetters();
         break;
       case ' ':
         e.preventDefault();
@@ -283,6 +298,7 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
       cursor,
       slot: currentSlotKeys(slots),
       isolated: isolatedCells(p.cells, slots),
+      minStroke: 1.5 / view.view.k,
     });
     // cursor outline on void squares and the selection rectangle
     const S = view.S;
@@ -305,7 +321,7 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
     const active = document.activeElement;
     if (active && panel.contains(active) && (active as HTMLElement).dataset.key) focusedClue = (active as HTMLElement).dataset.key! + ':' + (active as HTMLElement).dataset.field;
     else focusedClue = null;
-    const caret = active instanceof HTMLInputElement ? active.selectionStart : null;
+    const caret = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ? active.selectionStart : null;
     clear(panel);
     const es = entries(p, slots);
     const cur = slotThrough(slots, cursor.r, cursor.c, dir);
@@ -341,12 +357,13 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
     );
     if (focusedClue) {
       const [key, field] = focusedClue.split(':');
-      const el = (panel as HTMLElement).querySelector<HTMLInputElement>(`[data-key="${key}"][data-field="${field}"]`);
+      const el = (panel as HTMLElement).querySelector<HTMLInputElement | HTMLTextAreaElement>(`[data-key="${key}"][data-field="${field}"]`);
       if (el) {
         el.focus();
         if (caret !== null && caret !== undefined) el.setSelectionRange(caret, caret);
       }
     }
+    (panel as HTMLElement).querySelectorAll<HTMLTextAreaElement>('textarea.clue').forEach(autosize);
     drawTray();
   }
 
@@ -358,8 +375,17 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
       p.clues.set(key, { ...cur, ...t });
       save();
     };
-    const clueIn = h('input.clue', { value: text.clue, placeholder: '', dataset: { key, field: 'clue' }, oninput: () => setText({ clue: clueIn.value }) }) as HTMLInputElement;
-    const enumIn = h('input.enum', { value: text.enum, placeholder: String(e.len), dataset: { key, field: 'enum' }, oninput: () => { enumIn.value = enumIn.value.replace(/[^0-9,'\-]/g, ''); setText({ enum: enumIn.value }); } }) as HTMLInputElement;
+    const clueIn = h('textarea.clue', { rows: 1, value: text.clue, dataset: { key, field: 'clue' }, oninput: () => { setText({ clue: clueIn.value }); autosize(clueIn); }, onkeydown: (ev: KeyboardEvent) => { if (ev.key === 'Enter') { ev.preventDefault(); clueIn.blur(); view.el.focus(); } } }) as HTMLTextAreaElement;
+    clueIn.value = text.clue;
+    // the enumeration shows the entry length until the constructor writes something else
+    const enumIn = h('input.enum', { value: text.enum || String(e.len), class: text.enum ? 'enum' : 'enum derived', dataset: { key, field: 'enum' } }) as HTMLInputElement;
+    enumIn.oninput = () => {
+      enumIn.value = enumIn.value.replace(/[^0-9,'\-]/g, '');
+      const custom = enumIn.value !== '' && enumIn.value !== String(e.len);
+      enumIn.classList.toggle('derived', !custom);
+      setText({ enum: custom ? enumIn.value : '' });
+    };
+    enumIn.onblur = () => { if (!enumIn.value) { enumIn.value = String(e.len); enumIn.classList.add('derived'); } };
     const row = h(
       'div.clue-row',
       { class: active ? 'clue-row active' : 'clue-row' },
@@ -407,8 +433,8 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
         setCell(rr, cc, true);
         p.cells.get(cellKey(rr, cc))!.l = answer[i];
       }
+      p.clues.set(clueKey(r, c, d), { clue, enum: en });
     });
-    p.clues.set(clueKey(r, c, d), { clue, enum: en });
     const b = bankStore.byAnswer(answer);
     if (b && !b.usedIn.includes(p.id)) bankStore.put({ ...b, usedIn: [...b.usedIn, p.id] });
     save();
@@ -417,26 +443,36 @@ export function editorScreen(root: HTMLElement, puzzle: Puzzle, bankTray: string
 
   // ---- bank tray (new puzzle from bank selection) ----
   function drawTray() {
-    clear(tray);
-    if (!bankTray.length) {
-      tray.hidden = true;
+    clear(trayEl);
+    if (!tray.length) {
+      trayEl.hidden = true;
       return;
     }
-    tray.hidden = false;
+    trayEl.hidden = false;
     const all = bankStore.list();
-    tray.append(h('h3', 'From bank'));
-    for (const id of bankTray) {
-      const b = all.find((x) => x.id === id);
+    trayEl.append(h('h3', 'From bank'));
+    for (const item of tray) {
+      const b = all.find((x) => x.id === item.id);
       if (!b) continue;
-      tray.append(
+      trayEl.append(
         h(
           'button.suggestion',
-          { title: 'Place at the cursor in the current direction', onclick: () => { placeFromBank(b.answer, b.clue, b.enum, cursor.r, cursor.c, dir); bankTray = bankTray.filter((x) => x !== id); drawTray(); } },
+          {
+            class: item.placed ? 'suggestion used' : 'suggestion',
+            title: item.placed ? 'Place again at the cursor (undo removes the earlier placement)' : 'Place at the cursor in the current direction',
+            onclick: () => { placeFromBank(b.answer, b.clue, b.enum, cursor.r, cursor.c, dir); item.placed = true; drawTray(); },
+          },
           h('span.answer', b.answer),
           h('span.text', b.clue),
+          item.placed ? h('span.tag', 'placed') : null,
         ),
       );
     }
+  }
+
+  function autosize(el: HTMLTextAreaElement) {
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
   }
 
   draw();
