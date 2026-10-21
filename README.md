@@ -12,6 +12,10 @@ npm run build      # type-check and build to dist/
 npm run preview    # serve dist/
 ```
 
+## Deploying
+
+Pushes to `main` run `.github/workflows/deploy.yml`, which builds the app and pushes `dist/` into the `cryptographer/` folder of the `mschachner/site` repo, so it is served at mark-schachner.com/cryptographer. The workflow needs the `SITE_DEPLOY_KEY` secret (the site repo's SSH deploy key) on this repo.
+
 ## Layout
 
 - `src/model/` — puzzle types, slot and numbering computation, the corner rule, clue reattachment, share-link codec, themes and fonts. Pure functions; tested in `model.test.ts`.

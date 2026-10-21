@@ -1,0 +1,39 @@
+name: Deploy to site
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Push to site repo
+        env:
+          DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "$DEPLOY_KEY"
+          mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git clone --depth 1 git@github.com:mschachner/site.git site
+          rm -rf site/cryptographer          # clear stale hashed assets
+          mkdir -p site/cryptographer
+          cp -R dist/. site/cryptographer/   # the Vite build: index.html, assets/, fonts/, textures/, samples/
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cryptographer
+          git diff --cached --quiet || git commit -m "Deploy cryptographer from ${GITHUB_SHA::7}"
+          git push

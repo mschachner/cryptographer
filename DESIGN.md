@@ -404,7 +404,7 @@ The questions below were open in the first draft; the prototype goes with the re
 4. **Enumeration** — comma, hyphen and apostrophe separators: `5,4`, `3-6`, `5'1`.
 5. **Export metadata** — title, author and date (date of last modification).
 6. **UI framework** — none: TypeScript and plain DOM with small render functions per screen, built with Vite.
-7. **Hosting** — the site-repo workflow at `mark-schachner.com/cryptographer`; the build uses a relative base so it also runs from any subdirectory or from `vite preview`.
+7. **Hosting** — the site-repo workflow at `mark-schachner.com/cryptographer` (`.github/workflows/deploy.yml` builds on push to `main` and pushes `dist/` into the site repo over its deploy key); the build uses a relative base so it also runs from any subdirectory or from `vite preview`.
 8. **PDF** — generated client-side with pdf-lib, Merriweather TTFs embedded and subset. No print-stylesheet fallback yet.
 9. **Sync** — manual JSON export/import (whole library, bank alone, or a single puzzle via share link).
 
