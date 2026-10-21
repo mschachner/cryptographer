@@ -1,6 +1,6 @@
 # Cryptographer
 
-An app for constructing, saving and sharing cryptic crosswords. See [DESIGN.md](DESIGN.md) for the design.
+An app for constructing, saving and sharing cryptic crosswords. Built with Claude Fable 5.1.
 
 ## Development
 
